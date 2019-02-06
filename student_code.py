@@ -142,7 +142,45 @@ class KnowledgeBase(object):
         """
         ####################################################
         # Student code goes here
+        if not isinstance(fact_or_rule, Fact) and not isinstance(fact_or_rule, Rule):
+            return "Input is not a fact or rule"
 
+        elif isinstance(fact_or_rule, Fact) and not self._get_fact(fact_or_rule):
+            return "Fact is not in the KB"
+
+        elif isinstance(fact_or_rule, Rule) and not self._get_rule(fact_or_rule):
+            return "Rule is not in the KB"
+
+        elif isinstance(fact_or_rule, Fact) or isinstance(fact_or_rule, Rule):
+            return self.kb_explain_helper(fact_or_rule, 0)
+
+    def kb_explain_helper(self, fact_or_rule, depth):
+        if isinstance(fact_or_rule, Fact):
+            fact_rule_found = self._get_fact(fact_or_rule)
+            statement = str(fact_rule_found.statement)
+
+        elif isinstance(fact_or_rule, Rule):
+            fact_rule_found = self._get_rule(fact_or_rule)
+            statement = "("
+            if len(fact_rule_found.lhs) > 0:
+                for state in fact_rule_found.lhs:
+                    statement += str(state) + ", "
+                statement = statement[:-1]
+                statement = statement[:-1]
+            statement += ") -> " + str(fact_rule_found.rhs)
+
+        ret = ""
+        ret = " " * depth + fact_rule_found.name + ": " + statement
+        if fact_rule_found.asserted:
+            ret += " ASSERTED\n"
+        else:
+            ret += "\n"
+
+        for bind in fact_rule_found.supported_by:
+            ret += " " * (depth + 2) + "SUPPORTED BY\n"
+            ret += self.kb_explain_helper(bind[0], depth + 4) + self.kb_explain_helper(bind[1], depth + 4)
+
+        return ret
 
 class InferenceEngine(object):
     def fc_infer(self, fact, rule, kb):
